@@ -103,11 +103,22 @@ test('cannot join a running game', () => {
   assert.throws(() => joinGame(s, makePlayer('x', 'Late')), /already started/)
 })
 
-test('players get distinct avatars', () => {
+test('players get distinct colors and history is recorded', () => {
   let s = createGame('ABCD', makePlayer('h', 'Host'))
   s = joinGame(s, makePlayer('g', 'Guest'))
   s = joinGame(s, makePlayer('x', 'Third'))
-  const avatars = s.players.map((p) => p.avatar)
-  assert.equal(new Set(avatars).size, 3)
-  assert.equal(restartGame(startGame(s)).players[1].avatar, avatars[1])
+  const colors = s.players.map((p) => p.color)
+  assert.equal(new Set(colors).size, 3)
+  s = startGame(s)
+  s = roll(s, () => 0.999)
+  s = score(s, 'sixes')
+  assert.equal(s.history.length, 1)
+  assert.deepEqual(
+    { ...s.history[0], dice: undefined },
+    { playerId: 'h', playerName: 'Host', round: 1, category: 'sixes', points: 30, rolls: 1, bonus: 0, dice: undefined },
+  )
+  const again = restartGame(s)
+  assert.equal(again.players[1].color, colors[1])
+  assert.equal(again.history.length, 0)
+  assert.equal(again.gameNo, 2)
 })

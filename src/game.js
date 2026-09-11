@@ -138,18 +138,27 @@ export function emptyScores() {
   return s
 }
 
-export const AVATARS = ['🦁', '🐨', '🦊', '🐼', '🐸', '🐙', '🦉', '🐯', '🦄', '🐧', '🐻', '🐺']
+export const COLORS = [
+  '#6366f1',
+  '#ec4899',
+  '#f59e0b',
+  '#10b981',
+  '#0ea5e9',
+  '#8b5cf6',
+  '#f43f5e',
+  '#14b8a6',
+]
 
-export function pickAvatar(players = []) {
-  const used = new Set(players.map((p) => p.avatar))
-  return AVATARS.find((a) => !used.has(a)) || AVATARS[players.length % AVATARS.length]
+export function pickColor(players = []) {
+  const used = new Set(players.map((p) => p.color))
+  return COLORS.find((c) => !used.has(c)) || COLORS[players.length % COLORS.length]
 }
 
-export function makePlayer(id, name, avatar = AVATARS[0]) {
+export function makePlayer(id, name, color = COLORS[0]) {
   return {
     id,
     name: String(name).trim().slice(0, 20),
-    avatar,
+    color,
     scores: emptyScores(),
     yahtzeeBonus: 0,
   }
@@ -180,6 +189,8 @@ export function createGame(code, host) {
     round: 1,
     startIndex: 0,
     lastAction: null,
+    history: [],
+    gameNo: 1,
     ...freshTurn(),
   }
 }
@@ -188,10 +199,10 @@ export function joinGame(state, player) {
   if (state.players.some((p) => p.id === player.id)) return state
   if (state.status !== 'lobby') throw new Error('Game already started')
   if (state.players.length >= 8) throw new Error('Game is full (max 8 players)')
-  const avatar = state.players.some((p) => p.avatar === player.avatar)
-    ? pickAvatar(state.players)
-    : player.avatar
-  return { ...state, players: [...state.players, { ...player, avatar }] }
+  const color = state.players.some((p) => p.color === player.color)
+    ? pickColor(state.players)
+    : player.color
+  return { ...state, players: [...state.players, { ...player, color }] }
 }
 
 export function leaveGame(state, playerId) {
@@ -212,6 +223,7 @@ export function startGame(state) {
     round: 1,
     startIndex: 0,
     lastAction: null,
+    history: [],
     ...freshTurn(),
   }
 }
@@ -262,26 +274,31 @@ export function score(state, category) {
   if (turn === state.startIndex) round += 1
   const status = round > ROUNDS ? 'finished' : 'playing'
 
+  const entry = {
+    playerId: player.id,
+    playerName: player.name,
+    round: state.round,
+    category,
+    points,
+    rolls: 3 - state.rollsLeft,
+    dice: state.dice.slice(),
+    bonus,
+  }
+
   return {
     ...state,
     players,
     turn,
     round: Math.min(round, ROUNDS),
     status,
-    lastAction: {
-      playerId: player.id,
-      playerName: player.name,
-      category,
-      points,
-      dice: state.dice.slice(),
-      bonus,
-    },
+    lastAction: entry,
+    history: [...(state.history || []), entry],
     ...freshTurn(),
   }
 }
 
 export function restartGame(state) {
-  const players = state.players.map((p) => makePlayer(p.id, p.name, p.avatar))
+  const players = state.players.map((p) => makePlayer(p.id, p.name, p.color))
   const startIndex = (state.startIndex + 1) % players.length
   return {
     ...state,
@@ -291,6 +308,8 @@ export function restartGame(state) {
     startIndex,
     round: 1,
     lastAction: null,
+    history: [],
+    gameNo: (state.gameNo || 1) + 1,
     ...freshTurn(),
   }
 }

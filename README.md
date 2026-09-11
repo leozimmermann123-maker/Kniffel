@@ -5,7 +5,8 @@ A multiplayer Yahtzee (Kniffel) web app. Create a room, share the link or the
 
 ## Stack
 
-- Vite + React, deployed as a static site on Vercel
+- Vite + React + Framer Motion, deployed as a static site on Vercel
+- Light and dark themes (follows the system, with a manual toggle)
 - Supabase (Postgres + Realtime) holds one row per game in `kniffel_games`
 - Every move is written with optimistic concurrency (`version` column), so two
   devices can never overwrite each other. Realtime pushes updates instantly and
@@ -17,6 +18,8 @@ A multiplayer Yahtzee (Kniffel) web app. Create a room, share the link or the
 - Upper section bonus: 35 points at 63 or more
 - Yahtzee bonus: 100 points per extra Yahtzee, plus the standard joker rule
 - Up to 8 players per room; anyone with the link can watch a running game
+- Live stats: standings, points per round, upper-bonus progress, averages and projections
+- All-time personal stats (games, win rate, best, average) kept on the device
 
 ## Development
 
