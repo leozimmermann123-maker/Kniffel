@@ -138,8 +138,21 @@ export function emptyScores() {
   return s
 }
 
-export function makePlayer(id, name) {
-  return { id, name: String(name).trim().slice(0, 20), scores: emptyScores(), yahtzeeBonus: 0 }
+export const AVATARS = ['🦁', '🐨', '🦊', '🐼', '🐸', '🐙', '🦉', '🐯', '🦄', '🐧', '🐻', '🐺']
+
+export function pickAvatar(players = []) {
+  const used = new Set(players.map((p) => p.avatar))
+  return AVATARS.find((a) => !used.has(a)) || AVATARS[players.length % AVATARS.length]
+}
+
+export function makePlayer(id, name, avatar = AVATARS[0]) {
+  return {
+    id,
+    name: String(name).trim().slice(0, 20),
+    avatar,
+    scores: emptyScores(),
+    yahtzeeBonus: 0,
+  }
 }
 
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
@@ -175,7 +188,10 @@ export function joinGame(state, player) {
   if (state.players.some((p) => p.id === player.id)) return state
   if (state.status !== 'lobby') throw new Error('Game already started')
   if (state.players.length >= 8) throw new Error('Game is full (max 8 players)')
-  return { ...state, players: [...state.players, player] }
+  const avatar = state.players.some((p) => p.avatar === player.avatar)
+    ? pickAvatar(state.players)
+    : player.avatar
+  return { ...state, players: [...state.players, { ...player, avatar }] }
 }
 
 export function leaveGame(state, playerId) {
@@ -265,7 +281,7 @@ export function score(state, category) {
 }
 
 export function restartGame(state) {
-  const players = state.players.map((p) => makePlayer(p.id, p.name))
+  const players = state.players.map((p) => makePlayer(p.id, p.name, p.avatar))
   const startIndex = (state.startIndex + 1) % players.length
   return {
     ...state,

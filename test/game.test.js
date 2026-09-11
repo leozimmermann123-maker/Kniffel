@@ -102,3 +102,12 @@ test('cannot join a running game', () => {
   let s = startGame(createGame('ABCD', makePlayer('h', 'Host')))
   assert.throws(() => joinGame(s, makePlayer('x', 'Late')), /already started/)
 })
+
+test('players get distinct avatars', () => {
+  let s = createGame('ABCD', makePlayer('h', 'Host'))
+  s = joinGame(s, makePlayer('g', 'Guest'))
+  s = joinGame(s, makePlayer('x', 'Third'))
+  const avatars = s.players.map((p) => p.avatar)
+  assert.equal(new Set(avatars).size, 3)
+  assert.equal(restartGame(startGame(s)).players[1].avatar, avatars[1])
+})
